@@ -13,7 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
+	
 	"github.com/dominant-strategies/go-quai-stratum/policy"
 	"github.com/dominant-strategies/go-quai-stratum/storage"
 	"github.com/dominant-strategies/go-quai-stratum/util"
@@ -275,11 +275,24 @@ func (s *ProxyServer) fetchBlockTemplate() {
 	s.updateBlockTemplate(pendingHeader)
 }
 
+func isEqualNumberArray(arr1, arr2 []*big.Int) bool {
+    if len(arr1) != len(arr2) {
+	return false
+    }
+    for i := range arr1 {
+	if arr1[i].Cmp(arr2[i]) != 0 {
+	    return false
+	}
+    }
+    return true
+}
+
 func (s *ProxyServer) updateBlockTemplate(pendingWo *types.WorkObject) {
 	t := s.currentBlockTemplate()
 
-	// Short circuit if the pending header is the same as the current one
-	if t != nil && t.WorkObject != nil && t.WorkObject.WorkObjectHeader() != nil && t.WorkObject.WorkObjectHeader().SealHash() == pendingWo.SealHash() {
+	// Checking the block height
+	if t != nil && t.WorkObject != nil && isEqualNumberArray(t.WorkObject.NumberArray(), pendingWo.NumberArray()) {
+		// Abort execution if the block height has not changed
 		return
 	}
 
